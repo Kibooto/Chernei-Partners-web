@@ -15,12 +15,12 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     useremail = db.Column(db.String(20), nullable=False)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(128), nullable=False)  # Increase the length to accommodate hashed passwords
+    password = db.Column(db.String(128), nullable=False)  
 
     def __init__(self, useremail, username, password):
-        self.useremail = useremail  # Assign useremail here
+        self.useremail = useremail 
         self.username = username
-        self.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')  # Decode the byte string to UTF-8
+        self.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
@@ -35,41 +35,46 @@ def index():
 def register():
     current_page = '/register'
 
-    if request.method == 'POST':
-        useremail = request.form['useremail']
-        username = request.form['username']
-        password = request.form['password']
+    if not session.get('logged_in'):
+        if request.method == 'POST':
+            useremail = request.form['useremail']
+            username = request.form['username']
+            password = request.form['password']
 
-        print(useremail, username, password)
+            print(useremail, username, password)
 
-        new_user = User(useremail=useremail, username=username, password=password)
-        db.session.add(new_user)
-        db.session.commit()
+            new_user = User(useremail=useremail, username=username, password=password)
+            db.session.add(new_user)
+            db.session.commit()
 
-        return redirect('/login')
+            return redirect('/login')
 
-    return render_template('auth/register.html', current_page=current_page)
+        return render_template('auth/register.html', current_page=current_page)
+    else:
+        return redirect('/dashboard')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     current_page = '/login'
+    if not session.get('logged_in'):
+        if request.method == "POST":
+            username = request.form['username']
+            password = request.form['password']
 
-    if request.method == "POST":
-        username = request.form['username']
-        password = request.form['password']
+            user = User.query.filter_by(username=username).first()
 
-        user = User.query.filter_by(username=username).first()
-
-        if user:
-            if user.check_password(password):
-                session['username'] = user.username
-                session['logged_in'] = True
-                return redirect('/dashboard')
+            if user:
+                if user.check_password(password):
+                    session['username'] = user.username
+                    session['logged_in'] = True
+                    return redirect('/dashboard')
+                else:
+                    return "Invalid password"
             else:
-                return "Invalid password"
-        else:
-            return "User not found"
-
+                return "User not found"
+    else:
+        return redirect('/dashboard')
+    
     return render_template('auth/login.html', current_page=current_page)
 
 @app.route('/logout', methods=['GET', 'POST'])
