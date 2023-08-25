@@ -1,15 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
-#from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
-#from flask_wtf import wtforms
-#from wtforms import StringField, PasswordField, SubmitField, EmailField
-#from wtforms.validators import InputRequired, Length, Email, EqualTo, ValidationError
+import bcrypt
 
 app = Flask(__name__)
 
 # Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'secret'
+app.secret_key = 'secret'
 
 db = SQLAlchemy(app)
 
@@ -17,7 +15,15 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     useremail = db.Column(db.String(20), nullable=False)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(128), nullable=False)  # Increase the length to accommodate hashed passwords
+
+    def __init__(self, useremail, username, password):
+        self.useremail = useremail  # Assign useremail here
+        self.username = username
+        self.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')  # Decode the byte string to UTF-8
+
+    def check_password(self, password):
+        return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -25,13 +31,62 @@ def index():
     current_page = '/'
     return render_template('index.html', current_page=current_page)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    current_page = '/login'
-    return render_template('auth/login.html', current_page=current_page)
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     current_page = '/register'
+
+    if request.method == 'POST':
+        useremail = request.form['useremail']
+        username = request.form['username']
+        password = request.form['password']
+
+        print(useremail, username, password)
+
+        new_user = User(useremail=useremail, username=username, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect('/login')
+
     return render_template('auth/register.html', current_page=current_page)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    current_page = '/login'
+
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            if user.check_password(password):
+                session['username'] = user.username
+                session['logged_in'] = True
+                return redirect('/dashboard')
+            else:
+                return "Invalid password"
+        else:
+            return "User not found"
+
+    return render_template('auth/login.html', current_page=current_page)
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    session['logged_in'] = False
+    session.pop('username', None)
+
+    return redirect('/')
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
+    current_page = '/dashboard'
+
+    if session['logged_in'] == False:
+        return redirect('/login')
+    
+    return render_template('dashboard.html', current_page=current_page)
+
+#if __name__ == '__main__':
+#    app.run(debug=True)

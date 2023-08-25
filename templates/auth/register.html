@@ -14,37 +14,26 @@
     
     <div class="d-flex justify-content-center align-items-center bk-border" style="height: 100vh;">
         <div class="w-25 p-3">
-            <form>
+            <form action="/register", method="post">
                 <h1 class="display-6">Registration</h1>
                 <div class="form-floating mb-3 mt-3">
-                    <input type="text" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="Your Name">
+                    <input type="text" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="Your Name" name="username">
                     <label for="floatingInput">Login</label>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="name@example.com">
+                    <input type="email" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="name@example.com" name="useremail">
                     <label for="floatingInput">Email address</label>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password">
+                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password" name="password">
                     <label for="floatingPassword">Password</label>
                 </div>
 
                 <div class="form-floating">
-                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password">
+                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password" name="passwordc">
                     <label for="floatingPassword">Password confirmation</label>
-                </div>
-                <div class="pt-4">
-                    <div class="form-check">
-                        <input class="form-check-input is-valid" type="checkbox" value="" id="invalidCheck3" aria-describedby="invalidCheck3Feedback" required>
-                        <label class="form-check-label" for="invalidCheck3">
-                          Agree to terms and conditions
-                        </label>
-                        <div id="invalidCheck3Feedback" class="invalid-feedback">
-                          You must agree before submitting.
-                        </div>
-                    </div>
                 </div>
 
                 <div class="mt-3 me-0">
