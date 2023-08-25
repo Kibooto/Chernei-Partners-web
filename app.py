@@ -35,5 +35,3 @@ def register():
     current_page = '/register'
     return render_template('auth/register.html', current_page=current_page)
 
-if __name__ == '__main__':
-    app.run(debug=True)
