@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
+import requests
+
+
+open_weather_token = "bbb49be51783dd121e1aeca6a963e01f"
 
 app = Flask(__name__)
 
@@ -87,11 +91,24 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     current_page = '/dashboard'
+    weather = None
 
     if session['logged_in'] == False:
         return redirect('/login')
     
-    return render_template('dashboard.html', current_page=current_page)
+    if request.method == 'POST':
+        city = request.form['city']
+        url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={open_weather_token}&units=metric'
+        response = requests.get(url).json()
+        if response['cod'] != '404':
+            weather = {
+                'city': city,
+                'temperature': round(response['main']['temp'], 1),
+                'description': response['weather'][0]['description'],
+                'icon': response['weather'][0]['icon']
+            }
+    
+    return render_template('dashboard.html', current_page=current_page, weather=weather)
 
 #if __name__ == '__main__':
 #    app.run(debug=True)
