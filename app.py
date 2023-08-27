@@ -92,6 +92,7 @@ def logout():
 def dashboard():
     current_page = '/dashboard'
     weather = None
+    response = None
 
     if session['logged_in'] == False:
         return redirect('/login')
@@ -100,6 +101,7 @@ def dashboard():
         city = request.form['city']
         url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={open_weather_token}&units=metric'
         response = requests.get(url).json()
+        print(response)
         if response['cod'] != '404':
             weather = {
                 'city': city,
@@ -108,7 +110,7 @@ def dashboard():
                 'icon': response['weather'][0]['icon']
             }
     
-    return render_template('dashboard.html', current_page=current_page, weather=weather)
+    return render_template('dashboard.html', current_page=current_page, weather=weather, response=response)
 
-#if __name__ == '__main__':
-#    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

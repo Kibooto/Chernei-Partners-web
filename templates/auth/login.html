@@ -14,14 +14,15 @@
     
     <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
         <div class="w-25 p-3">
+            <fieldset class="border p-4 shadow-lg bg-body rounded">
             <form action="/login", method="post">
                 <h1 class="display-6">Authentication</h1>
                 <div class="form-floating mb-3 mt-3">
-                    <input type="text" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="Your Name" name="username">
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Your Name" name="username">
                     <label for="floatingInput">Login</label>
                 </div>
                   <div class="form-floating">
-                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password" name="password">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
                     <label for="floatingPassword">Password</label>
                 </div>
 
@@ -31,7 +32,7 @@
             </form>
 
             <p class="text-end mt-3">Dont have an account? <a href="/register">Register</a></p>
-
+            </fieldset>
         </div>
     </div>
     

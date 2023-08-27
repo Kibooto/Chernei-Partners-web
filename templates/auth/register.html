@@ -14,25 +14,26 @@
     
     <div class="d-flex justify-content-center align-items-center bk-border" style="height: 100vh;">
         <div class="w-25 p-3">
+            <fieldset class="border p-4 shadow-lg bg-body rounded">
             <form action="/register", method="post">
                 <h1 class="display-6">Registration</h1>
                 <div class="form-floating mb-3 mt-3">
-                    <input type="text" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="Your Name" name="username">
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Your Name" name="username">
                     <label for="floatingInput">Login</label>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control shadow-lg bg-body rounded" id="floatingInput" placeholder="name@example.com" name="useremail">
+                    <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com" name="useremail">
                     <label for="floatingInput">Email address</label>
                 </div>
 
                 <div class="form-floating mb-3">
-                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password" name="password">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
                     <label for="floatingPassword">Password</label>
                 </div>
 
                 <div class="form-floating">
-                    <input type="password" class="form-control shadow-lg bg-body rounded" id="floatingPassword" placeholder="Password" name="passwordc">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="passwordc">
                     <label for="floatingPassword">Password confirmation</label>
                 </div>
 
@@ -42,7 +43,7 @@
             </form>
 
             <p class="text-end mt-3">Already have an account? <a href="/login">Login</a></p>
-
+            </fieldset>
         </div>
     </div>
 
