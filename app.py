@@ -38,28 +38,49 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     current_page = '/register'
-
+    errors = []
+    print(session, errors)
     if not session.get('logged_in'):
         if request.method == 'POST':
-            useremail = request.form['useremail']
-            username = request.form['username']
-            password = request.form['password']
+            if not request.form['useremail']:
+                errors.append('Email is required')
+            else:
+                useremail = request.form['useremail']
+            
+            if not request.form['username']:
+                errors.append('Username is required')
+            else:
+                username = request.form['username']
+            
+            if not request.form['password']:
+                errors.append('Password is required')
+            else:
+                password = request.form['password']
+            
+            if not request.form['passwordc']:
+                errors.append('Confirm password is required')
+            else:
+                if request.form['passwordc'] != request.form['password'] and request.form['password'] != '':
+                    errors.append('Passwords do not match')
+            print(errors)
+            if not errors:
+                new_user = User(useremail=useremail, username=username, password=password)
+                db.session.add(new_user)
+                db.session.commit()
 
-            print(useremail, username, password)
+                return redirect('/login')
+            else:
+                return render_template('auth/register.html', errors=errors, current_page=current_page)
 
-            new_user = User(useremail=useremail, username=username, password=password)
-            db.session.add(new_user)
-            db.session.commit()
-
-            return redirect('/login')
-
-        return render_template('auth/register.html', current_page=current_page)
+        return render_template('auth/register.html', current_page=current_page, errors=errors)
     else:
         return redirect('/dashboard')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     current_page = '/login'
+    errors = []
+
     if not session.get('logged_in'):
         if request.method == "POST":
             username = request.form['username']
@@ -67,19 +88,16 @@ def login():
 
             user = User.query.filter_by(username=username).first()
 
-            if user:
-                if user.check_password(password):
-                    session['username'] = user.username
-                    session['logged_in'] = True
-                    return redirect('/dashboard')
-                else:
-                    return "Invalid password"
+            if user and user.check_password(password):
+                session['username'] = user.username
+                session['logged_in'] = True
+                return redirect('/dashboard')
             else:
-                return "User not found"
+                errors.append('Invalid')
     else:
         return redirect('/dashboard')
-    
-    return render_template('auth/login.html', current_page=current_page)
+    print(errors)
+    return render_template('auth/login.html', current_page=current_page, errors=errors)
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
