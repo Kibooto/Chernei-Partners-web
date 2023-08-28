@@ -29,6 +29,17 @@ class User(db.Model):
     def check_password(self, password):
         return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
 
+class Todo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    comments = db.Column(db.Text)
+    done = db.Column(db.Boolean, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Зовнішній ключ
+
+    def __init__(self, title, comments, user_id):
+        self.title = title
+        self.comments = comments
+        self.user_id = user_id
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -129,6 +140,37 @@ def dashboard():
             }
     
     return render_template('dashboard.html', current_page=current_page, weather=weather, response=response)
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    current_page = '/profile'
+    return render_template('profile.html', current_page=current_page)
+
+@app.route('/todo', methods=['GET', 'POST'])
+def todo():
+    current_page = '/todo'
+    error = None
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    user_id = User.query.filter_by(username=session['username']).first().id
+
+    user_todos = Todo.query.filter_by(user_id=user_id).all()
+
+    if request.method == 'POST':
+        if not request.form['title']:
+            error = 'Title is required'
+        if not error:
+            title = request.form['title']
+            comments = request.form['comments']
+            new_todo = Todo(title=title, comments=comments, user_id=user_id)
+            db.session.add(new_todo)
+            db.session.commit()
+            return redirect('/todo')
+        else:
+            return render_template('todo/todo.html', current_page=current_page, error=error, user_todos=user_todos)
+
+    return render_template('todo/todo.html', current_page=current_page, user_todos=user_todos)
 
 if __name__ == '__main__':
     app.run(debug=True)
