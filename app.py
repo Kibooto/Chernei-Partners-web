@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import bcrypt
 import requests
+from PIL import Image
+from io import BytesIO
+import base64
 
 
 open_weather_token = "bbb49be51783dd121e1aeca6a963e01f"
@@ -15,11 +19,16 @@ app.secret_key = 'secret'
 
 db = SQLAlchemy(app)
 
+migrate = Migrate(app, db)
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     useremail = db.Column(db.String(20), nullable=False)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(128), nullable=False)  
+    password = db.Column(db.String(128), nullable=False)
+    image_data = db.Column(db.LargeBinary, nullable=True, default=open('static/default.webp', 'rb').read())
+    image_filename = db.Column(db.String(255), nullable=True, default='default.webp')
+
 
     def __init__(self, useremail, username, password):
         self.useremail = useremail 
@@ -75,8 +84,14 @@ def register():
                     errors.append('Passwords do not match')
             print(errors)
             if not errors:
+                image_filename = 'default.webp'
                 new_user = User(useremail=useremail, username=username, password=password)
                 db.session.add(new_user)
+                db.session.commit()
+
+                new_user.image_data = open('static/default.webp', 'rb').read()  # Assign image data here
+                new_user.image_filename = image_filename
+
                 db.session.commit()
 
                 return redirect('/login')
@@ -144,7 +159,47 @@ def dashboard():
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     current_page = '/profile'
-    return render_template('profile.html', current_page=current_page)
+
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    user = User.query.filter_by(username=session['username']).first()
+
+    image = "data:image/png;base64,"+ base64.b64encode(user.image_data).decode('utf-8')
+    return render_template('profile/profile.html', current_page=current_page, user=user, image=image)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    current_page = '/edit_profile'
+
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    user = User.query.filter_by(username=session['username']).first()
+    image = "data:image/png;base64,"+ base64.b64encode(user.image_data).decode('utf-8')
+
+    if request.method == 'POST':
+        if request.files['image'].filename != '':
+            new_image_data = request.files['image'].read()
+
+            image = Image.open(BytesIO(new_image_data))
+    
+            new_size = (300, 300)
+            resized_image = image.resize(new_size)
+    
+
+            output_buffer = BytesIO()
+            resized_image.save(output_buffer, format="JPEG")
+            new_image_data_resized = output_buffer.getvalue()
+    
+            user.image_data = new_image_data_resized
+    
+            db.session.commit()
+
+        return redirect('/profile')
+        
+
+    return render_template('profile/edit_profile.html', current_page=current_page, user=user, image=image)
 
 @app.route('/todo', methods=['GET', 'POST'])
 def todo():
@@ -158,6 +213,22 @@ def todo():
     user_todos = Todo.query.filter_by(user_id=user_id).all()
 
     if request.method == 'POST':
+        if 'done_button' in request.form:
+            todo_id = int(request.form['done_button'])
+            todo = Todo.query.get(todo_id)
+
+            todo.done = True
+            db.session.commit()
+            return redirect('/todo')
+
+        elif 'delete_button' in request.form:
+            todo_id = int(request.form['delete_button'])
+            todo = Todo.query.get(todo_id)
+
+            db.session.delete(todo)
+            db.session.commit()
+            return redirect('/todo')
+            
         if not request.form['title']:
             error = 'Title is required'
         if not error:

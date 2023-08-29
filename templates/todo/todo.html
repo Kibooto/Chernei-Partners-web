@@ -8,7 +8,7 @@
     <link rel='stylesheet' href='{{ url_for('static', filename='css/style.css') }}'>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 
     {% include '_navbar.html' %}
     <div class="container">
@@ -44,19 +44,21 @@
             {% for todo in user_todos %}
                 <div class="col-md-3">
                     <div class="mt-5" style="max-width: 380px;">
+                        <form action="/todo" method="post">
                         <fieldset class="border p-4 shadow-lg bg-body rounded" style="height: 330px;">
                             <h1 class="display-6">{{ todo.title }}</h1>
                             <hr class="mt-">
                             <p class="lead text-wrap">{{ todo.comments }}</p>
                             <hr class="mt-5">
                             <div class="mt-4">
-                                <p class="lead">Not done</p>
+                                <p class="lead">{% if todo.done %} Done {% else %} Not done {% endif %}</p>
                             </div>
                             <div class="mt-auto">
-                                <button type="button" class="btn btn-success">Done</button>
-                                <button type="button" class="btn btn-danger">Delete</button>
+                                <button type="submit" class="btn btn-success" name="done_button" value="{{ todo.id }}">Done</button>
+                                <button type="submit" class="btn btn-danger" name="delete_button" value="{{ todo.id }}">Delete</button>
                             </div>
                         </fieldset>
+                        </form>
                     </div>
                 </div>
                 {% if first_row %}
@@ -65,8 +67,8 @@
             {% endfor %}
         </div>
     </div>
-    
-    
+
+    {% include '_footer.html' %}
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>   
 
