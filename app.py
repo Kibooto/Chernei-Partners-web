@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import bcrypt
 import requests
 from PIL import Image
@@ -18,8 +17,6 @@ app.config['SECRET_KEY'] = 'secret'
 app.secret_key = 'secret'
 
 db = SQLAlchemy(app)
-
-migrate = Migrate(app, db)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
