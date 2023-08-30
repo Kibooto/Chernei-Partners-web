@@ -5,6 +5,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import base64
+from datetime import datetime
 
 
 open_weather_token = "bbb49be51783dd121e1aeca6a963e01f"
@@ -39,13 +40,47 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     comments = db.Column(db.Text)
-    done = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Зовнішній ключ
 
     def __init__(self, title, comments, user_id):
         self.title = title
         self.comments = comments
         self.user_id = user_id
+
+class Posts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    text = db.Column(db.Text)
+    comments = db.Column(db.Text)
+    image_data = db.Column(db.LargeBinary, nullable=True)
+    likes = db.Column(db.Integer, nullable=False, default=0)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Зовнішній ключ
+    time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, title, user_id, text, image_data=None):
+        self.title = title
+        self.text = text
+        self.image_data = image_data
+        self.user_id = user_id
+
+def image_to_base64(image_data):
+    base64_data = base64.b64encode(image_data).decode('utf-8')
+    return "data:image/png;base64," + base64_data
+
+app.jinja_env.globals.update(image_to_base64=image_to_base64)
+
+def image_loader(image, height, width, format="JPEG"):
+    image = Image.open(BytesIO(image))
+    
+    new_size = (width, height)
+    resized_image = image.resize(new_size)
+    
+    output_buffer = BytesIO()
+    resized_image.save(output_buffer, format=format)
+    new_image_data = output_buffer.getvalue()
+    
+    return new_image_data
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -153,31 +188,23 @@ def dashboard():
     
     return render_template('dashboard.html', current_page=current_page, weather=weather, response=response)
 
-@app.route('/profile', methods=['GET', 'POST'])
-def profile():
-    current_page = '/profile'
+@app.route('/new_post', methods=['GET', 'POST'])
+def new_post():
+    current_page = '/new_post'
 
     if not session.get('logged_in'):
         return redirect('/login')
     
     user = User.query.filter_by(username=session['username']).first()
 
-    image = "data:image/png;base64,"+ base64.b64encode(user.image_data).decode('utf-8')
-    return render_template('profile/profile.html', current_page=current_page, user=user, image=image)
-
-@app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_profile():
-    current_page = '/edit_profile'
-
-    if not session.get('logged_in'):
-        return redirect('/login')
-    
-    user = User.query.filter_by(username=session['username']).first()
     image = "data:image/png;base64,"+ base64.b64encode(user.image_data).decode('utf-8')
 
     if request.method == 'POST':
-        if request.files['image'].filename != '':
-            new_image_data = request.files['image'].read()
+        title = request.form['title']
+        text = request.form['text']
+        post_image = request.files['post_image'].filename
+        if post_image != '':
+            new_image_data = request.files['post_image'].read()
 
             image = Image.open(BytesIO(new_image_data))
     
@@ -188,8 +215,54 @@ def edit_profile():
             output_buffer = BytesIO()
             resized_image.save(output_buffer, format="JPEG")
             new_image_data_resized = output_buffer.getvalue()
+
+            new_post = Posts(title=title, user_id=user.id, text=text, image_data=new_image_data_resized)
+            db.session.add(new_post)
+            db.session.commit()
+            return redirect('/profile')
+        else:
+            new_post = Posts(title=title, user_id=user.id, text=text)
+            db.session.add(new_post)
+            db.session.commit()
+            return redirect('/profile')
+
+    return render_template('profile/new_post.html', current_page=current_page, user=user, image=image)
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    current_page = '/profile'
+
+    if not session.get('logged_in'):
+        return redirect('/login')
     
-            user.image_data = new_image_data_resized
+    user = User.query.filter_by(username=session['username']).first()
+
+    image = image_to_base64(user.image_data)
+
+    if request.method == 'POST':
+        if 'new_post' in request.form:
+            return redirect('/new_post')
+
+    user_posts = Posts.query.filter_by(user_id=user.id).all()
+
+    return render_template('profile/profile.html', current_page=current_page, user=user, image=image, user_posts=user_posts)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    current_page = '/edit_profile'
+
+    if not session.get('logged_in'):
+        return redirect('/login')
+    
+    user = User.query.filter_by(username=session['username']).first()
+
+    image = image_to_base64(user.image_data)
+
+    if request.method == 'POST':
+        if request.files['image'].filename != '':
+            new_image_data = request.files['image'].read()
+    
+            user.image_data = image_loader(new_image_data, 300, 300)
     
             db.session.commit()
 
@@ -240,5 +313,5 @@ def todo():
 
     return render_template('todo/todo.html', current_page=current_page, user_todos=user_todos)
 
-#if __name__ == '__main__':
-#    app.run(debug=True)1
+if __name__ == '__main__':
+    app.run(debug=True)
