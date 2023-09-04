@@ -6,7 +6,6 @@ from PIL import Image
 from io import BytesIO
 import base64
 from datetime import datetime
-from flask_migrate import Migrate
 
 
 open_weather_token = "bbb49be51783dd121e1aeca6a963e01f"
