@@ -6,6 +6,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 from datetime import datetime
+from flask_migrate import Migrate
 
 
 open_weather_token = "bbb49be51783dd121e1aeca6a963e01f"
@@ -313,5 +314,5 @@ def todo():
 
     return render_template('todo/todo.html', current_page=current_page, user_todos=user_todos)
 
-#if __name__ == '__main__':
-#    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
